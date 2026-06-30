@@ -1,6 +1,6 @@
 import { getCarrier, DEFAULT_CARRIER_ID, httpErrorMessage, findPickupAddressInJson } from './carriers.js';
 
-console.log('[Tracker Background v1.4.5] Service Worker initialized successfully.');
+console.log('[Tracker Background v1.4.6] Service Worker initialized successfully.');
 
 const ALARM_NAME = 'purolator_next_query';
 // WAF tokens are valid ~5 minutes; warn after 4 min
@@ -73,13 +73,29 @@ async function setupDeclarativeRules() {
         urlFilter: 'https://track.purolator.com/*',
         resourceTypes: ['xmlhttprequest', 'main_frame', 'sub_frame']
       }
+    },
+    {
+      id: 2,
+      priority: 1,
+      action: {
+        type: 'modifyHeaders',
+        requestHeaders: [
+          { header: 'origin', operation: 'set', value: 'https://www.purolator.com' },
+          { header: 'referer', operation: 'set', value: 'https://www.purolator.com/en/shipping/tracker' },
+          { header: 'sec-fetch-site', operation: 'set', value: 'same-origin' }
+        ]
+      },
+      condition: {
+        urlFilter: 'https://www.purolator.com/en/api/locations/byID/*',
+        resourceTypes: ['xmlhttprequest']
+      }
     }
   ];
 
   try {
     // Session rules are dynamic and clean up automatically on browser restart
     await chrome.declarativeNetRequest.updateSessionRules({
-      removeRuleIds: [1],
+      removeRuleIds: [1, 2],
       addRules: rules
     });
   } catch (e) {
