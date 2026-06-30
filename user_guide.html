@@ -210,7 +210,7 @@
       </div>
       <h1>Purolator Batch Tracker 批量查询插件</h1>
       <p style="color: var(--text-muted); margin-bottom: 0.5rem;">物流运营批量运单查询工具 — 傻瓜式使用指南</p>
-      <span class="version-tag">版本 v1.4.7</span>
+      <span class="version-tag">版本 v1.4.8</span>
     </div>
 
     <!-- Step 1 -->
@@ -288,6 +288,7 @@
           <ul>
             <li><strong>预计送达 (ETA)</strong>：运单属于未妥投状态且官方有预估时间时显示具体日期；<strong>如果官方当前没有计算出来（显示为 Not Available），插件也会对应展示 <span class="badge-gray">Not Available</span></strong>，与官网保持完全一致！已妥投（Delivered）件则显示 <span class="badge-gray">—</span>。</li>
             <li><strong>自提地址</strong>：当运单处于可自提状态（<code style="font-family:monospace;">Available for pickup</code>）时，**为了确保请求行为参数与真人操作100%完全一致，插件会静默等待网页自身加载自提网点卡片时发起的 location 请求**，并在此刻自动拦截、解析出该站点的具体地址（例如 <code style="font-family:monospace;">1550 Creditstone RD, Concord, ON L4K 5N1</code>）并填入该字段！</li>
+            <li><strong>地址智能缓存</strong>：已查到的自提点地址会永久保存在本地数据库中。下次遇到相同的自提点 ID 时，插件会**在 1 毫秒内瞬间完成匹配加载，无需进行任何网络等待！**</li>
             <li><strong>历史记录 (最新 3 条)</strong>：同时格式化并倒序展示最新的 3 条历史轨迹，供更深入的详情排查。</li>
           </ul>
         </li>

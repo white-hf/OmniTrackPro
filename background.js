@@ -1,6 +1,6 @@
 import { getCarrier, DEFAULT_CARRIER_ID, httpErrorMessage, findPickupAddressInJson } from './carriers.js';
 
-console.log('[Tracker Background v1.4.7] Service Worker initialized successfully.');
+console.log('[Tracker Background v1.4.8] Service Worker initialized successfully.');
 
 const ALARM_NAME = 'purolator_next_query';
 // WAF tokens are valid ~5 minutes; warn after 4 min
@@ -470,18 +470,27 @@ async function processNextItem() {
 
     // If self-pickup hold ID is present, wait for the page's own JS to execute locations/byID fetch and intercept it naturally
     if (result.holdForPickupLocationId) {
-      console.log('[Tracker Background] Detected hold ID. Waiting for page JS to fetch location details...');
-      // Wait up to 2.5 seconds (25 attempts * 100ms) for the page script to complete its request
-      for (let i = 0; i < 25; i++) {
-        await new Promise(r => setTimeout(r, 100));
-        const storageRes = await chrome.storage.local.get(['locationAddressMap']);
-        const map = storageRes.locationAddressMap || {};
-        const key = String(result.holdForPickupLocationId).toUpperCase();
-        if (map[key]) {
-          console.log('[Tracker Background] Successfully intercepted page locations lookup:', key, '->', map[key]);
-          const holdPrefix = `[ID: ${result.holdForPickupLocationId}] `;
-          result.pickupAddress = map[key].startsWith('[ID:') ? map[key] : `${holdPrefix}${map[key]}`;
-          break;
+      const key = String(result.holdForPickupLocationId).toUpperCase();
+      const storageRes = await chrome.storage.local.get(['locationAddressMap']);
+      const map = storageRes.locationAddressMap || {};
+      const holdPrefix = `[ID: ${result.holdForPickupLocationId}] `;
+
+      if (map[key]) {
+        // Instant hit in persistent cache
+        console.log('[Tracker Background] Location address cache hit instantly:', key, '->', map[key]);
+        result.pickupAddress = map[key].startsWith('[ID:') ? map[key] : `${holdPrefix}${map[key]}`;
+      } else {
+        // Cache miss: Wait up to 2.5 seconds (25 attempts * 100ms) for page JS to request it
+        console.log('[Tracker Background] Location cache miss. Waiting for page JS to fetch details for:', key);
+        for (let i = 0; i < 25; i++) {
+          await new Promise(r => setTimeout(r, 100));
+          const storageResCheck = await chrome.storage.local.get(['locationAddressMap']);
+          const mapCheck = storageResCheck.locationAddressMap || {};
+          if (mapCheck[key]) {
+            console.log('[Tracker Background] Intercepted page locations query:', key, '->', mapCheck[key]);
+            result.pickupAddress = mapCheck[key].startsWith('[ID:') ? mapCheck[key] : `${holdPrefix}${mapCheck[key]}`;
+            break;
+          }
         }
       }
     }
