@@ -1,0 +1,65 @@
+{
+  "manifest_version": 3,
+  "name": "Purolator Batch Tracker",
+  "version": "1.4.5",
+  "description": "物流运营批量运单查询工具 — Batch tracking query for Purolator shipments",
+  "permissions": [
+    "storage",
+    "notifications",
+    "alarms",
+    "webRequest",
+    "declarativeNetRequest",
+    "scripting",
+    "tts"
+  ],
+  "host_permissions": [
+    "https://track.purolator.com/*",
+    "https://www.purolator.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://track.purolator.com/*",
+        "https://www.purolator.com/*"
+      ],
+      "js": ["interceptor.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://track.purolator.com/*",
+        "https://www.purolator.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Purolator Batch Tracker",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_page": "options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["results.html", "icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

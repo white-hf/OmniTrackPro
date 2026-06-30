@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>查询结果 — Purolator Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="results.css">
+</head>
+<body>
+  <div class="page">
+
+    <!-- Header -->
+    <header class="page-header">
+      <div class="header-left">
+        <span class="brand-icon">📦</span>
+        <span class="brand-name">Purolator<strong>Tracker</strong></span>
+        <span class="divider">|</span>
+        <span class="page-title">查询结果</span>
+        <span class="brand-version" style="font-size:10px; background:rgba(0,0,0,0.05); color:rgba(0,0,0,0.6); padding:2px 6px; border-radius:4px; margin-left:8px; font-weight:normal; border:1px solid rgba(0,0,0,0.1);">v1.4.5</span>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn btn-sm btn-outline" id="btn-refresh">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          刷新
+        </button>
+        <button class="btn btn-sm btn-outline" id="btn-copy-all">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          复制全部
+        </button>
+        <button class="btn btn-sm btn-primary" id="btn-export">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          导出 CSV
+        </button>
+      </div>
+    </header>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-pill">
+        <span class="sp-label">总计</span>
+        <span class="sp-val" id="sp-total">—</span>
+      </div>
+      <div class="stat-pill sp-green">
+        <span class="sp-label">✅ 完成</span>
+        <span class="sp-val" id="sp-done">0</span>
+      </div>
+      <div class="stat-pill sp-yellow">
+        <span class="sp-label">⏳ 待查</span>
+        <span class="sp-val" id="sp-pending">0</span>
+      </div>
+      <div class="stat-pill sp-red">
+        <span class="sp-label">❌ 失败</span>
+        <span class="sp-val" id="sp-fail">0</span>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+        <span class="progress-pct" id="progress-pct">0%</span>
+      </div>
+
+      <div class="status-pill" id="status-pill">
+        <span class="status-dot" id="sp-dot"></span>
+        <span id="sp-status-text">未开始</span>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <!-- Search -->
+      <div class="search-wrap">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="search-input" placeholder="搜索运单号或状态..." class="search-input"/>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-group">
+        <button class="filter-btn active" data-filter="all">全部</button>
+        <button class="filter-btn" data-filter="completed">已完成</button>
+        <button class="filter-btn" data-filter="error">失败</button>
+        <button class="filter-btn" data-filter="pending">待查</button>
+      </div>
+
+      <!-- Sort -->
+      <div class="sort-wrap">
+        <label class="sort-label">排序:</label>
+        <select id="sort-select" class="sort-select">
+          <option value="input_order">原始顺序</option>
+          <option value="status">状态</option>
+          <option value="tracking_id">运单号</option>
+          <option value="last_event_time">最后记录时间</option>
+        </select>
+      </div>
+
+      <span class="showing-count" id="showing-count"></span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table class="results-table" id="results-table">
+        <colgroup>
+          <col class="col-idx"/>
+          <col class="col-id"/>
+          <col class="col-carrier"/>
+          <col class="col-status"/>
+          <col class="col-eta"/>
+          <col class="col-pickup"/>
+          <col class="col-last"/>
+          <col class="col-first"/>
+          <col class="col-route"/>
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="th-idx">#</th>
+            <th class="sortable" data-col="tracking_id">运单号 <span class="sort-arrow">⇕</span></th>
+            <th>物流商</th>
+            <th class="sortable" data-col="status">状态 <span class="sort-arrow">⇕</span></th>
+            <th>预计送达 (ETA)</th>
+            <th>自提地址</th>
+            <th>历史记录 (最新3条)</th>
+            <th>第一条记录</th>
+            <th>发件 → 收件</th>
+          </tr>
+        </thead>
+        <tbody id="results-tbody"></tbody>
+      </table>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="empty-state" style="display:none">
+        <div class="empty-emoji">📭</div>
+        <div class="empty-title">暂无结果</div>
+        <div class="empty-sub">运单查询完成后，结果将显示在此处</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="results.js"></script>
+</body>
+</html>

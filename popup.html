@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purolator Batch Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-brand">
+        <div class="brand-icon">📦</div>
+        <span class="brand-name">Purolator<strong>Tracker</strong></span>
+        <span class="brand-version" style="font-size:10px; background:rgba(255,255,255,0.15); color:rgba(255,255,255,0.85); padding:2px 6px; border-radius:4px; margin-left:8px; font-weight:normal;">v1.4.5</span>
+      </div>
+      <button class="icon-btn" id="btn-settings" title="设置">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Error / Status Banner -->
+    <div class="alert-banner" id="alert-banner" style="display:none">
+      <span class="alert-icon" id="alert-icon">⚠️</span>
+      <span class="alert-text" id="alert-text"></span>
+      <button class="alert-close" id="alert-dismiss">✕</button>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="input" id="tab-btn-input">
+        <span>输入运单</span>
+        <span class="tab-badge" id="badge-input" style="display:none"></span>
+      </button>
+      <button class="tab-btn" data-tab="progress" id="tab-btn-progress">
+        <span>查询进度</span>
+        <span class="tab-badge tab-badge-blue" id="badge-progress" style="display:none"></span>
+      </button>
+      <button class="tab-btn" data-tab="results" id="tab-btn-results">
+        <span>结果导出</span>
+        <span class="tab-badge tab-badge-green" id="badge-results" style="display:none"></span>
+      </button>
+    </nav>
+
+    <!-- Tab Content -->
+    <main class="content">
+
+      <!-- ══════════ INPUT TAB ══════════ -->
+      <section id="tab-input" class="tab-pane active">
+
+        <!-- Carrier Selector -->
+        <div class="carrier-selector-wrap">
+          <span class="carrier-selector-label">物流商</span>
+          <div class="carrier-chips" id="carrier-chips">
+            <!-- Populated dynamically by popup.js -->
+          </div>
+        </div>
+
+        <!-- Token Status Bar -->
+        <div class="token-status-bar" id="token-status-bar">
+          <span class="ts-dot" id="ts-dot"></span>
+          <span class="ts-text" id="ts-text">检查中...</span>
+          <button class="ts-btn" id="ts-open-site" style="display:none">
+            打开官网自动获取 →
+          </button>
+          <span class="ts-age" id="ts-age" style="display:none"></span>
+        </div>
+
+        <div class="input-block">
+          <div class="input-label-row">
+            <label for="tracking-input">粘贴运单号</label>
+            <span class="count-pill" id="count-pill">0 个</span>
+          </div>
+          <textarea
+            id="tracking-input"
+            placeholder="每行一个运单号，或用逗号、空格分隔...
+例如：
+SF0227968926447
+SF0227968926448, SF0227968926449"
+            spellcheck="false"
+          ></textarea>
+          <div class="input-hint">支持换行 / 逗号 / 空格 / 制表符分隔，自动去重</div>
+        </div>
+
+        <div class="estimate-row" id="estimate-row" style="display:none">
+          <span class="est-icon">⏱</span>
+          <span id="estimate-text" class="est-text"></span>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-primary" id="btn-start" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            开始查询
+          </button>
+          <button class="btn btn-secondary" id="btn-continue-from-input" style="display:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,14 20,9 15,4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
+            继续上次
+          </button>
+          <button class="btn btn-ghost" id="btn-clear-input">清空</button>
+        </div>
+      </section>
+
+      <!-- ══════════ PROGRESS TAB ══════════ -->
+      <section id="tab-progress" class="tab-pane">
+        <!-- Progress Ring + Stats -->
+        <div class="progress-hero">
+          <div class="ring-wrap">
+            <svg class="progress-ring" width="110" height="110" viewBox="0 0 110 110">
+              <defs>
+                <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#5b8df6"/>
+                  <stop offset="100%" stop-color="#22d3a1"/>
+                </linearGradient>
+              </defs>
+              <circle class="ring-track" cx="55" cy="55" r="46"/>
+              <circle class="ring-progress" id="ring-progress" cx="55" cy="55" r="46"
+                      stroke-dasharray="289.03"
+                      stroke-dashoffset="289.03"
+                      transform="rotate(-90 55 55)"/>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-pct" id="ring-pct">0%</div>
+              <div class="ring-lbl">完成</div>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-num" id="stat-total">—</div>
+              <div class="stat-lbl">总计</div>
+            </div>
+            <div class="stat-card stat-green">
+              <div class="stat-num" id="stat-done">0</div>
+              <div class="stat-lbl">完成</div>
+            </div>
+            <div class="stat-card stat-yellow">
+              <div class="stat-num" id="stat-pending">0</div>
+              <div class="stat-lbl">待查</div>
+            </div>
+            <div class="stat-card stat-red">
+              <div class="stat-num" id="stat-fail">0</div>
+              <div class="stat-lbl">失败</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Row -->
+        <div class="status-row">
+          <div class="status-dot" id="status-dot"></div>
+          <span id="status-text" class="status-text">未开始</span>
+          <span id="next-timer" class="next-timer" style="display:none"></span>
+        </div>
+
+        <!-- Error Card -->
+        <div class="error-card" id="error-card" style="display:none">
+          <div class="ec-header">
+            <span>⚠️ 查询已停止</span>
+            <span class="ec-code" id="ec-code"></span>
+          </div>
+          <div class="ec-msg" id="ec-msg"></div>
+          <div class="ec-detail" id="ec-detail"></div>
+          <div class="ec-time" id="ec-time"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-row">
+          <button class="btn btn-primary" id="btn-resume" style="display:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            继续查询
+          </button>
+          <button class="btn btn-warning" id="btn-pause" style="display:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            暂停
+          </button>
+          <button class="btn btn-outline" id="btn-open-results">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            完整结果
+          </button>
+          <button class="btn btn-ghost btn-danger-text" id="btn-reset">重置</button>
+        </div>
+      </section>
+
+      <!-- ══════════ RESULTS TAB ══════════ -->
+      <section id="tab-results" class="tab-pane">
+        <div class="results-toolbar">
+          <div class="res-count-wrap">
+            <span class="res-count" id="res-count">0 条</span>
+            <span class="res-filter-btns">
+              <button class="filter-btn active" data-filter="all">全部</button>
+              <button class="filter-btn" data-filter="completed">完成</button>
+              <button class="filter-btn" data-filter="error">失败</button>
+              <button class="filter-btn" data-filter="pending">待查</button>
+            </span>
+          </div>
+          <div class="res-actions">
+            <button class="btn btn-sm btn-outline" id="btn-copy-csv">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              复制
+            </button>
+            <button class="btn btn-sm btn-primary" id="btn-export-csv">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              导出 CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- Mini Table -->
+        <div class="mini-table-wrap">
+          <table class="mini-table" id="mini-table">
+            <thead>
+              <tr>
+                <th>运单号</th>
+                <th>状态</th>
+                <th>最后记录</th>
+              </tr>
+            </thead>
+            <tbody id="mini-tbody"></tbody>
+          </table>
+          <div class="empty-state" id="empty-results">
+            <div class="empty-emoji">📭</div>
+            <div class="empty-text">暂无结果，请先查询运单</div>
+          </div>
+        </div>
+
+        <button class="btn-full btn-outline" id="btn-open-full">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          在新标签页查看完整结果表
+        </button>
+      </section>
+
+    </main>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
