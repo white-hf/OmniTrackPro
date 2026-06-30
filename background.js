@@ -1,6 +1,6 @@
 import { getCarrier, DEFAULT_CARRIER_ID, httpErrorMessage, findPickupAddressInJson } from './carriers.js';
 
-console.log('[Tracker Background v1.4.6] Service Worker initialized successfully.');
+console.log('[Tracker Background v1.4.7] Service Worker initialized successfully.');
 
 const ALARM_NAME = 'purolator_next_query';
 // WAF tokens are valid ~5 minutes; warn after 4 min
@@ -468,20 +468,20 @@ async function processNextItem() {
     // Parse the captured JSON using the carrier parser
     const result = carrier.parseResponse(rawData, item.id);
 
-    // Fetch and merge self-pickup address details directly (Manifest V3 background fetch bypasses CORS)
+    // If self-pickup hold ID is present, wait for the page's own JS to execute locations/byID fetch and intercept it naturally
     if (result.holdForPickupLocationId) {
-      console.log('[Tracker Background] Fetching location details directly for ID:', result.holdForPickupLocationId);
-      const directAddress = await fetchLocationDetailsDirect(result.holdForPickupLocationId);
-      const holdPrefix = `[ID: ${result.holdForPickupLocationId}] `;
-      if (directAddress) {
-        result.pickupAddress = `${holdPrefix}${directAddress}`;
-      } else {
-        // Fallback: check if we have it in our storage map from interceptor
+      console.log('[Tracker Background] Detected hold ID. Waiting for page JS to fetch location details...');
+      // Wait up to 2.5 seconds (25 attempts * 100ms) for the page script to complete its request
+      for (let i = 0; i < 25; i++) {
+        await new Promise(r => setTimeout(r, 100));
         const storageRes = await chrome.storage.local.get(['locationAddressMap']);
         const map = storageRes.locationAddressMap || {};
         const key = String(result.holdForPickupLocationId).toUpperCase();
         if (map[key]) {
+          console.log('[Tracker Background] Successfully intercepted page locations lookup:', key, '->', map[key]);
+          const holdPrefix = `[ID: ${result.holdForPickupLocationId}] `;
           result.pickupAddress = map[key].startsWith('[ID:') ? map[key] : `${holdPrefix}${map[key]}`;
+          break;
         }
       }
     }
@@ -664,37 +664,4 @@ async function handleCapturedLocation(url, data) {
   }
 }
 
-async function fetchLocationDetailsDirect(locationId) {
-  try {
-    const response = await fetch("https://www.purolator.com/en/api/locations/byID/", {
-      method: "POST",
-      headers: {
-        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "accept": "application/json, text/javascript, */*; q=0.01",
-        "x-requested-with": "XMLHttpRequest"
-      },
-      body: `LocationId=${encodeURIComponent(locationId)}`
-    });
-    
-    if (!response.ok) {
-      console.warn('[Tracker Background] Direct location fetch failed status:', response.status);
-      return null;
-    }
-    
-    const data = await response.json();
-    if (data && data.locations && data.locations.length > 0) {
-      const loc = data.locations[0];
-      if (loc && loc.address) {
-        const addr = loc.address;
-        const street = [addr.streetNumber, addr.streetName, addr.streetType].filter(Boolean).join(' ');
-        const zip = addr.postalCode ? String(addr.postalCode).replace(/\s+/g, '') : '';
-        const formattedZip = zip.length === 6 ? `${zip.slice(0, 3)} ${zip.slice(3)}` : zip;
-        const fullAddress = `${street}, ${addr.city}, ${addr.provinceCode || addr.province} ${formattedZip}`.trim().replace(/,\s*$/, '');
-        return fullAddress;
-      }
-    }
-  } catch (e) {
-    console.error('[Tracker Background] Direct location fetch error:', e);
-  }
-  return null;
-}
+

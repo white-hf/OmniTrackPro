@@ -4,26 +4,26 @@
  * Automates DOM interaction (typing, clicking search button).
  */
 
-console.log('[Tracker Content v1.4.6] Content Script initialized in ISOLATED world.');
+console.log('[Tracker Content v1.4.7] Content Script initialized in ISOLATED world.');
 
 // ─── 1. Handle API Intercept Messages ──────────────────────────────────────────
 // Listen for postMessage from the main world interceptor (interceptor.js) and forward to background.js
 window.addEventListener('message', (event) => {
   if (event.data?.type === 'PUROLATOR_API_RESPONSE') {
-    console.log('[Tracker Content v1.4.6] Intercepted API success response, URL:', event.data.url);
+    console.log('[Tracker Content v1.4.7] Intercepted API success response, URL:', event.data.url);
     chrome.runtime.sendMessage({
       action: 'API_RESPONSE_CAPTURED',
       url: event.data.url,
       data: event.data.data
-    }).catch(err => console.warn('[Tracker Content v1.4.6] Success message forward failed:', err));
+    }).catch(err => console.warn('[Tracker Content v1.4.7] Success message forward failed:', err));
   } else if (event.data?.type === 'PUROLATOR_API_ERROR') {
-    console.log('[Tracker Content v1.4.6] Intercepted API error response, URL:', event.data.url);
+    console.log('[Tracker Content v1.4.7] Intercepted API error response, URL:', event.data.url);
     chrome.runtime.sendMessage({
       action: 'API_RESPONSE_ERROR',
       url: event.data.url,
       status: event.data.status,
       message: event.data.message || '官方接口请求失败'
-    }).catch(err => console.warn('[Tracker Content v1.4.6] Error message forward failed:', err));
+    }).catch(err => console.warn('[Tracker Content v1.4.7] Error message forward failed:', err));
   }
 });
 
@@ -79,7 +79,7 @@ function findInputBox() {
     for (const el of elements) {
       // Must be visible AND NOT inside a global header/navigation
       if (el && el.offsetWidth > 0 && el.offsetHeight > 0 && !isHeaderOrGlobalSearch(el)) {
-        console.log('[Tracker Content v1.4.6] Matched input element selector:', s);
+        console.log('[Tracker Content v1.4.7] Matched input element selector:', s);
         return el;
       }
     }
@@ -93,7 +93,7 @@ function findTrackButton() {
   const direct = querySelectorAllDeep('#track-button, .btn-track, .track-btn, button[type="submit"], input[type="submit"]');
   for (const d of direct) {
     if (d && d.offsetWidth > 0 && d.offsetHeight > 0 && !isHeaderOrGlobalSearch(d)) {
-      console.log('[Tracker Content v1.4.6] Matched direct button selector.');
+      console.log('[Tracker Content v1.4.7] Matched direct button selector.');
       return d;
     }
   }
@@ -107,7 +107,7 @@ function findTrackButton() {
     const txt = (el.textContent || el.value || '').trim().toLowerCase();
     if (txt === 'track' || txt === 'track now' || txt === 'track package' || txt === 'search' || txt === '查询') {
       if (el.offsetWidth > 0 && el.offsetHeight > 0) {
-        console.log('[Tracker Content v1.4.6] Matched button text exact:', txt);
+        console.log('[Tracker Content v1.4.7] Matched button text exact:', txt);
         return el;
       }
     }
@@ -119,7 +119,7 @@ function findTrackButton() {
     const txt = (el.textContent || el.value || '').toLowerCase();
     if (txt.includes('track') || txt.includes('search') || txt.includes('查询')) {
       if (el.offsetWidth > 0 && el.offsetHeight > 0) {
-        console.log('[Tracker Content v1.4.6] Matched button text partial:', txt);
+        console.log('[Tracker Content v1.4.7] Matched button text partial:', txt);
         return el;
       }
     }
@@ -177,12 +177,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 async function executeSearchFlow(trackingId) {
-  console.log('[Tracker Content v1.4.6] Starting DOM automation for ID:', trackingId);
+  console.log('[Tracker Content v1.4.7] Starting DOM automation for ID:', trackingId);
 
   // Diagnostic: Print a complete map of all inputs/textareas in the DOM (including Shadow DOM)
   try {
     const allInputs = querySelectorAllDeep('input, textarea');
-    console.log(`[Tracker Content v1.4.6] DOM Scan: Found ${allInputs.length} total input/textarea tags.`);
+    console.log(`[Tracker Content v1.4.7] DOM Scan: Found ${allInputs.length} total input/textarea tags.`);
     allInputs.forEach((el, idx) => {
       const path = [];
       let p = el;
@@ -194,13 +194,13 @@ async function executeSearchFlow(trackingId) {
       console.log(`  [Input #${idx}] tag=${el.tagName} | id=${el.id || 'none'} | placeholder="${el.placeholder || ''}" | visible=${el.offsetWidth > 0 && el.offsetHeight > 0} | skipped_by_header_check=${isHeaderOrGlobalSearch(el)} | path=${path.reverse().join(' > ')}`);
     });
   } catch (e) {
-    console.warn('[Tracker Content v1.4.6] DOM diagnostic scan failed:', e.message);
+    console.warn('[Tracker Content v1.4.7] DOM diagnostic scan failed:', e.message);
   }
 
   // Poll for tracking input box (up to 10 seconds) to wait for React/dynamic framework rendering
   let input = null;
   const inputStart = Date.now();
-  console.log('[Tracker Content v1.4.6] Polling for tracking input box in body...');
+  console.log('[Tracker Content v1.4.7] Polling for tracking input box in body...');
   while (Date.now() - inputStart < 10000) {
     input = findInputBox();
     if (input) break;
@@ -208,10 +208,10 @@ async function executeSearchFlow(trackingId) {
   }
 
   if (!input) {
-    console.error('[Tracker Content v1.4.6] Failed to find main tracking input box in body (Timeout 10s)!');
+    console.error('[Tracker Content v1.4.7] Failed to find main tracking input box in body (Timeout 10s)!');
     throw new Error('未找到单号输入框，请确保页面已完全加载完毕。');
   }
-  console.log('[Tracker Content v1.4.6] Target Input Box Found:', input.tagName, 'ID:', input.id, 'Placeholder:', input.placeholder);
+  console.log('[Tracker Content v1.4.7] Target Input Box Found:', input.tagName, 'ID:', input.id, 'Placeholder:', input.placeholder);
 
   // Poll for track button (up to 4 seconds)
   let btn = null;
@@ -223,9 +223,9 @@ async function executeSearchFlow(trackingId) {
   }
 
   if (btn) {
-    console.log('[Tracker Content v1.4.6] Target Button Found:', btn.tagName, 'ID:', btn.id, 'Text:', (btn.textContent || btn.value || '').trim());
+    console.log('[Tracker Content v1.4.7] Target Button Found:', btn.tagName, 'ID:', btn.id, 'Text:', (btn.textContent || btn.value || '').trim());
   } else {
-    console.warn('[Tracker Content v1.4.6] No specific search button found outside header. Will attempt form submit or Enter keypress fallbacks.');
+    console.warn('[Tracker Content v1.4.7] No specific search button found outside header. Will attempt form submit or Enter keypress fallbacks.');
   }
 
   // Focus and clear input
@@ -258,13 +258,13 @@ async function executeSearchFlow(trackingId) {
   // Try to click button or trigger form submit
   if (btn) {
     const clickTarget = promoteToClickableParent(btn);
-    console.log('[Tracker Content v1.4.6] Triggering click on Search target:', clickTarget.tagName, 'Class:', clickTarget.className);
+    console.log('[Tracker Content v1.4.7] Triggering click on Search target:', clickTarget.tagName, 'Class:', clickTarget.className);
     simulateMouseClick(clickTarget);
   }
 
   // Double Insurance: Dispatch Enter keypress on input to force form submission
   await new Promise(r => setTimeout(r, 200));
-  console.log('[Tracker Content v1.4.6] Dispatching Enter keypress on input to ensure form submission...');
+  console.log('[Tracker Content v1.4.7] Dispatching Enter keypress on input to ensure form submission...');
   input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
   input.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
   input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));

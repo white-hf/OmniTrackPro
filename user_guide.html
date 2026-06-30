@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purolator Batch Tracker 批量查询插件 — 使用指南</title>
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --border: #e2e8f0;
+      
+      --important-bg: #fffbeb;
+      --important-border: #f59e0b;
+      --important-text: #78350f;
+      
+      --tip-bg: #f0fdf4;
+      --tip-border: #22c55e;
+      --tip-text: #14532d;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      border: 1px solid var(--border);
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .logo-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #e0f2fe;
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      margin-bottom: 1rem;
+    }
+
+    .logo {
+      font-size: 32px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 0.5rem;
+    }
+
+    .version-tag {
+      display: inline-block;
+      font-size: 0.85rem;
+      background: #f1f5f9;
+      color: #64748b;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      border: 1px solid #cbd5e1;
+    }
+
+    /* Section Card */
+    .section {
+      margin-bottom: 2.5rem;
+    }
+
+    h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .step-number {
+      background: var(--primary);
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+
+    ul, ol {
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    li {
+      margin-bottom: 0.50rem;
+      color: var(--text-muted);
+    }
+
+    li strong {
+      color: var(--text-main);
+    }
+
+    /* Custom Alerts */
+    .alert {
+      padding: 1.25rem;
+      border-radius: 8px;
+      border-left: 4px solid;
+      margin: 1.25rem 0;
+    }
+
+    .alert-important {
+      background-color: var(--important-bg);
+      border-left-color: var(--important-border);
+      color: var(--important-text);
+    }
+
+    .alert-tip {
+      background-color: var(--tip-bg);
+      border-left-color: var(--tip-border);
+      color: var(--tip-text);
+    }
+
+    .alert-title {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Custom badges */
+    .badge-green {
+      background-color: #dcfce7;
+      color: #15803d;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .badge-red {
+      background-color: #fee2e2;
+      color: #b91c1c;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .badge-gray {
+      background-color: #f1f5f9;
+      color: #475569;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    /* Print styling */
+    @media print {
+      body {
+        background-color: white;
+        padding: 0;
+      }
+      .container {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-container">
+        <span class="logo">📦</span>
+      </div>
+      <h1>Purolator Batch Tracker 批量查询插件</h1>
+      <p style="color: var(--text-muted); margin-bottom: 0.5rem;">物流运营批量运单查询工具 — 傻瓜式使用指南</p>
+      <span class="version-tag">版本 v1.4.7</span>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="section">
+      <h2><span class="step-number">1</span> 🛠️ 第一步：安装插件（只需操作一次）</h2>
+      <ol>
+        <li><strong>打开 Chrome 浏览器的扩展程序页面</strong>：<br>在 Chrome 浏览器地址栏输入 <code style="background:#f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: monospace;">chrome://extensions/</code> 并按回车。</li>
+        <li><strong>开启“开发者模式”</strong>：<br>在扩展程序页面<strong>右上角</strong>，找到 <strong>“开发者模式” (Developer mode)</strong> 开关，将其**开启**。</li>
+        <li><strong>加载插件文件夹</strong>：<br>点击左上角的 <strong>“加载已解压的扩展程序” (Load unpacked)</strong> 按钮，选择我们为您准备的插件根文件夹（文件夹名称通常为 <code style="background:#f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: monospace;">purolator-tracker</code>）。</li>
+        <li><strong>固定插件图标</strong>：<br>点击浏览器右上角拼图形状的“扩展程序”图标，找到 <strong>Purolator Batch Tracker</strong>，点击旁边的“图钉”按钮，将其固定在工具栏上。</li>
+      </ol>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="section">
+      <h2><span class="step-number">2</span> 🚀 第二步：日常查单操作流程</h2>
+      
+      <h3 style="font-size: 1.05rem; margin: 0.75rem 0 0.5rem 0; color: #334155;">1. 激活安全令牌（WAF Token）</h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.5rem;">由于官方网站有防爬虫防火墙，我们在开始批量查单前，需要先让浏览器获得“安全通行证”：</p>
+      <ul>
+        <li>点击浏览器右上角插件图标 <span style="font-size:1.1rem;">📦</span>，选择 <strong>Purolator</strong> 渠道。</li>
+        <li><strong>查看状态栏</strong>：
+          <ul>
+            <li><span class="badge-green">🟢 WAF Token 已就绪</span>：可以直接开始输入单号查询。</li>
+            <li><span class="badge-red">🔴 WAF Token 已过期</span> 或 <strong>未获取</strong>：
+              <ol style="margin-top: 5px; padding-left: 1rem;">
+                <li>点击旁边的 <strong>“点击刷新 →”</strong>（或“打开官网”），浏览器会自动打开官方查单页面。</li>
+                <li>在官方网页中<strong>手动输入任意一个运单号并点击查询一次</strong>。</li>
+                <li>返回插件界面，状态栏会自动刷新并变成绿色的 <span class="badge-green">🟢 WAF Token 已就绪</span>。</li>
+              </ol>
+            </li>
+          </ul>
+        </li>
+      </ul>
+
+      <h3 style="font-size: 1.05rem; margin: 1.25rem 0 0.5rem 0; color: #334155;">2. 输入运单号并启动</h3>
+      <ol>
+        <li>在插件文本框中<strong>粘贴您要查询的运单号</strong>（支持一行一个，或用逗号、空格隔开，支持多达数百单）。</li>
+        <li>点击 <strong>“▶ 开始查询”</strong> 按钮。</li>
+        <li>此时，系统会自动弹出一个专用于自动化的<strong>独立浏览器窗口</strong>，并在该窗口中自动帮您打字、滚动和递交查询。</li>
+      </ol>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="section">
+      <h2><span class="step-number">3</span> ⚠️ 第三步：【黄金法则】挂机避坑指南（非常重要！）</h2>
+      <p style="color: var(--text-muted);">在自动查询运行期间，运营同事可以继续在电脑上做别的工作（如写邮件、聊天、浏览网页等），但请务必遵守以下规则：</p>
+
+      <!-- Alert 1 -->
+      <div class="alert alert-important">
+        <div class="alert-title">🚨 黄金规则一：千万不要“最小化”查询小窗口！</div>
+        <ul>
+          <li><strong>错误操作</strong>：点击小窗口左上角的黄/绿色减号按钮，将其收缩到屏幕底部的 Dock 栏或任务栏。这会导致操作系统为了省电直接“冻结”小窗口，让插件彻底卡死。</li>
+          <li><strong>正确做法</strong>：随手把它丢在屏幕后面，让您正在操作的<strong>主浏览器窗口直接遮挡盖住它</strong>。只要小窗口没有被最小化，它在后台就能以 100% 的速度安全运行。</li>
+        </ul>
+      </div>
+
+      <!-- Alert 2 -->
+      <div class="alert alert-tip">
+        <div class="alert-title">💡 黄金规则二：如何应对弹出来的人机图片验证？</div>
+        <ul>
+          <li><strong>双重提醒系统</strong>：如果查询过程中官网弹出了人机验证码，独立小窗口会自动弹到屏幕最前方并闪烁跳动，<strong>同时电脑扬声器会播放清脆的中文语音提醒：“注意！检测到人机验证码，请尽快处理。”</strong>。</li>
+          <li><strong>处理办法</strong>：同事只需用鼠标**顺手点选一下验证图片**。一旦验证通过，小窗口会再次自动隐匿，插件会**自动恢复查询**，不需要任何人手动去点暂停或继续！</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="section" style="margin-bottom: 0;">
+      <h2><span class="step-number">4</span> 📊 第四步：查看与导出结果</h2>
+      <ol>
+        <li>在插件界面点击 <strong>“查看查询结果”</strong>（或在浏览器中打开结果页）。</li>
+        <li>页面中会实时滚动显示每一个单号的<strong>最新物流状态、签收时间、当前位置、异常报错</strong>等。</li>
+        <li><strong>数据展现升级说明</strong>：
+          <ul>
+            <li><strong>预计送达 (ETA)</strong>：运单属于未妥投状态且官方有预估时间时显示具体日期；<strong>如果官方当前没有计算出来（显示为 Not Available），插件也会对应展示 <span class="badge-gray">Not Available</span></strong>，与官网保持完全一致！已妥投（Delivered）件则显示 <span class="badge-gray">—</span>。</li>
+            <li><strong>自提地址</strong>：当运单处于可自提状态（<code style="font-family:monospace;">Available for pickup</code>）时，**为了确保请求行为参数与真人操作100%完全一致，插件会静默等待网页自身加载自提网点卡片时发起的 location 请求**，并在此刻自动拦截、解析出该站点的具体地址（例如 <code style="font-family:monospace;">1550 Creditstone RD, Concord, ON L4K 5N1</code>）并填入该字段！</li>
+            <li><strong>历史记录 (最新 3 条)</strong>：同时格式化并倒序展示最新的 3 条历史轨迹，供更深入的详情排查。</li>
+          </ul>
+        </li>
+        <li>查询全部完成后，点击右上角的 <strong>“导出 Excel (CSV)”</strong>，即可一键下载完整的物流明细报表。导出的表格同样包含所有独立地址与 ETA 数据，可极大简化运营统计工作。</li>
+      </ol>
+    </div>
+
+  </div>
+
+</body>
+</html>
