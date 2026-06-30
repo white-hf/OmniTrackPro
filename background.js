@@ -1,6 +1,6 @@
 import { getCarrier, DEFAULT_CARRIER_ID, httpErrorMessage, findPickupAddressInJson } from './carriers.js';
 
-console.log('[Tracker Background v1.4.8] Service Worker initialized successfully.');
+console.log('[Tracker Background v1.4.9] Service Worker initialized successfully.');
 
 const ALARM_NAME = 'purolator_next_query';
 // WAF tokens are valid ~5 minutes; warn after 4 min
@@ -475,20 +475,37 @@ async function processNextItem() {
       const map = storageRes.locationAddressMap || {};
       const holdPrefix = `[ID: ${result.holdForPickupLocationId}] `;
 
-      if (map[key]) {
-        // Instant hit in persistent cache
-        console.log('[Tracker Background] Location address cache hit instantly:', key, '->', map[key]);
-        result.pickupAddress = map[key].startsWith('[ID:') ? map[key] : `${holdPrefix}${map[key]}`;
+      const entry = map[key];
+      let isExpired = true;
+      let cachedAddress = '';
+
+      if (entry) {
+        if (typeof entry === 'object' && entry.address && entry.updatedAt) {
+          const ageMs = Date.now() - entry.updatedAt;
+          const twoWeeksMs = 14 * 24 * 3600 * 1000;
+          if (ageMs < twoWeeksMs) {
+            isExpired = false;
+            cachedAddress = entry.address;
+          }
+        }
+      }
+
+      if (!isExpired && cachedAddress) {
+        // Instant hit in persistent cache and not expired (less than 2 weeks old)
+        console.log('[Tracker Background] Location address cache hit instantly:', key, '->', cachedAddress);
+        result.pickupAddress = cachedAddress.startsWith('[ID:') ? cachedAddress : `${holdPrefix}${cachedAddress}`;
       } else {
-        // Cache miss: Wait up to 2.5 seconds (25 attempts * 100ms) for page JS to request it
-        console.log('[Tracker Background] Location cache miss. Waiting for page JS to fetch details for:', key);
+        // Cache miss or expired: Wait up to 2.5 seconds (25 attempts * 100ms) for page JS to request it
+        console.log('[Tracker Background] Location cache miss or expired (2 weeks). Waiting for page JS to fetch details for:', key);
         for (let i = 0; i < 25; i++) {
           await new Promise(r => setTimeout(r, 100));
           const storageResCheck = await chrome.storage.local.get(['locationAddressMap']);
           const mapCheck = storageResCheck.locationAddressMap || {};
-          if (mapCheck[key]) {
-            console.log('[Tracker Background] Intercepted page locations query:', key, '->', mapCheck[key]);
-            result.pickupAddress = mapCheck[key].startsWith('[ID:') ? mapCheck[key] : `${holdPrefix}${mapCheck[key]}`;
+          const checkEntry = mapCheck[key];
+          if (checkEntry) {
+            const checkAddr = typeof checkEntry === 'object' ? checkEntry.address : checkEntry;
+            console.log('[Tracker Background] Intercepted page locations query:', key, '->', checkAddr);
+            result.pickupAddress = checkAddr.startsWith('[ID:') ? checkAddr : `${holdPrefix}${checkAddr}`;
             break;
           }
         }
@@ -624,7 +641,10 @@ async function handleCapturedLocation(url, data) {
           console.log('[Tracker Background] Parsing and saving exact location byID map:', key, '->', fullAddress);
           const storageRes = await chrome.storage.local.get(['locationAddressMap']);
           const map = storageRes.locationAddressMap || {};
-          map[key] = fullAddress;
+          map[key] = {
+            address: fullAddress,
+            updatedAt: Date.now()
+          };
           await chrome.storage.local.set({ locationAddressMap: map });
           broadcastUpdate();
           return;
@@ -663,7 +683,10 @@ async function handleCapturedLocation(url, data) {
         
         const storageRes = await chrome.storage.local.get(['locationAddressMap']);
         const map = storageRes.locationAddressMap || {};
-        map[key] = address;
+        map[key] = {
+          address: address,
+          updatedAt: Date.now()
+        };
         await chrome.storage.local.set({ locationAddressMap: map });
         broadcastUpdate();
       }

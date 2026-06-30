@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Purolator Batch Tracker",
-  "version": "1.4.8",
+  "version": "1.4.9",
   "description": "物流运营批量运单查询工具 — Batch tracking query for Purolator shipments",
   "permissions": [
     "storage",
